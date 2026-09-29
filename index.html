@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер Завдань - Лабораторна робота №7</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Менеджер Завдань</h1>
+            <p class="subtitle">Лабораторна робота №7: Використання HTTP-запитів</p>
+        </header>
+
+        <main>
+            <!-- Форма створення завдання -->
+            <section class="create-section">
+                <h2>Створити нове завдання</h2>
+                <form id="create-task-form">
+                    <div class="form-group">
+                        <input
+                            type="text"
+                            id="new-task-input"
+                            placeholder="Введіть назву завдання..."
+                            required
+                        />
+                        <button type="submit" class="btn btn-primary">➕ Додати</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Список завдань -->
+            <section class="tasks-section">
+                <div class="section-header">
+                    <h2>Мої завдання</h2>
+                    <div class="pagination-controls">
+                        <button id="btn-prev" class="btn btn-secondary">⬅️ Назад</button>
+                        <span id="page-info" class="page-info">Сторінка 1</span>
+                        <button id="btn-next" class="btn btn-secondary">Вперед ➡️</button>
+                    </div>
+                </div>
+                <div id="tasks-container">
+                    <!-- Завдання будуть додані динамічно -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>API: <a href="https://jsonplaceholder.typicode.com/" target="_blank">JSONPlaceholder</a></p>
+            <p class="cache-info">Кешування активне | HMR підтримується</p>
+        </footer>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
