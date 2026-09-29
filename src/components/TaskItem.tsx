@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { TaskEntry } from '@/hooks/useTasks';
+import { CheckIcon, PencilIcon, TrashIcon, XIcon } from './icons';
 
 interface Props {
   task: TaskEntry;
@@ -10,46 +12,108 @@ interface Props {
 }
 
 export default function TaskItem({ task, onToggle, onRename, onDelete }: Props) {
-  function handleEdit() {
-    const newTitle = window.prompt('Введіть нову назву завдання:', task.title)?.trim();
-    if (newTitle && newTitle !== task.title) {
-      onRename(task, newTitle);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(task.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  function startEdit() {
+    setDraft(task.title);
+    setEditing(true);
+  }
+
+  function save() {
+    const title = draft.trim();
+    setEditing(false);
+    if (title && title !== task.title) {
+      onRename(task, title);
     }
   }
 
-  function handleDelete() {
-    if (window.confirm('Ви впевнені, що хочете видалити це завдання?')) {
-      onDelete(task);
-    }
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') save();
+    if (event.key === 'Escape') setEditing(false);
   }
 
-  const className = ['task-item', task.completed && 'completed', task.removing && 'removing']
+  const className = ['task', task.completed && 'task--done', task.removing && 'task--removing']
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={className} data-id={task.id}>
-      <div className="task-content">
+    <li className={className} data-id={task.id}>
+      <label className="check">
         <input
           type="checkbox"
-          className="task-checkbox"
           checked={task.completed}
           onChange={(e) => onToggle(task, e.target.checked)}
           aria-label={`Позначити «${task.title}» як виконане`}
         />
-        <div className="task-text">
-          <span className="task-title">{task.title}</span>
-          <span className="task-id">ID: {task.id}</span>
-        </div>
+        <span className="check__box">
+          <CheckIcon />
+        </span>
+      </label>
+
+      <div className="task__body">
+        {editing ? (
+          <input
+            ref={inputRef}
+            className="task__edit"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={save}
+            aria-label="Нова назва завдання"
+            maxLength={200}
+          />
+        ) : (
+          <span className="task__title" onDoubleClick={startEdit}>
+            {task.title}
+          </span>
+        )}
+        <span className="task__meta">
+          <span className="chip">#{task.id}</span>
+          <span className={`badge ${task.completed ? 'badge--done' : 'badge--active'}`}>
+            {task.completed ? 'Виконано' : 'В роботі'}
+          </span>
+        </span>
       </div>
-      <div className="task-actions">
-        <button type="button" className="btn-edit" onClick={handleEdit}>
-          ✏️ Редагувати
-        </button>
-        <button type="button" className="btn-delete" onClick={handleDelete}>
-          🗑️ Видалити
-        </button>
+
+      <div className="task__actions">
+        {editing ? (
+          <>
+            <button type="button" className="icon-btn icon-btn--ok" onMouseDown={(e) => e.preventDefault()} onClick={save} title="Зберегти">
+              <CheckIcon />
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setEditing(false)}
+              title="Скасувати"
+            >
+              <XIcon />
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className="icon-btn" onClick={startEdit} title="Редагувати" aria-label="Редагувати">
+              <PencilIcon />
+            </button>
+            <button
+              type="button"
+              className="icon-btn icon-btn--danger"
+              onClick={() => onDelete(task)}
+              title="Видалити"
+              aria-label="Видалити"
+            >
+              <TrashIcon />
+            </button>
+          </>
+        )}
       </div>
-    </div>
+    </li>
   );
 }

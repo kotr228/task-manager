@@ -1,11 +1,11 @@
 // Модуль для роботи з HTTP-запитами
 
-import type { NewTask, Task, TaskUpdate } from '@/types/task';
+import type { NewTask, Task, TaskUpdate, TasksPage } from '@/types/task';
 
 export const API_URL = 'https://jsonplaceholder.typicode.com/todos';
 
 // Кеш для зберігання даних
-const cache = new Map<string, Task[]>();
+const cache = new Map<string, TasksPage>();
 
 // Опціональний токен авторизації
 let token: string | null = null;
@@ -47,8 +47,8 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-/** Отримати завдання з пагінацією. */
-export async function getTasks(page = 1, limit = 10): Promise<Task[]> {
+/** Отримати завдання з пагінацією (разом із загальною кількістю з `X-Total-Count`). */
+export async function getTasks(page = 1, limit = 10): Promise<TasksPage> {
   const cacheKey = `tasks_${page}_${limit}`;
 
   // Перевіряємо кеш
@@ -67,12 +67,14 @@ export async function getTasks(page = 1, limit = 10): Promise<Task[]> {
     });
 
     checkResponse(response);
-    const tasks = (await response.json()) as Task[];
+    const items = (await response.json()) as Task[];
+    const totalHeader = Number.parseInt(response.headers.get('X-Total-Count') ?? '', 10);
+    const result: TasksPage = { items, total: Number.isNaN(totalHeader) ? null : totalHeader };
 
     // Зберігаємо в кеш
-    cache.set(cacheKey, tasks);
+    cache.set(cacheKey, result);
 
-    return tasks;
+    return result;
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw error;

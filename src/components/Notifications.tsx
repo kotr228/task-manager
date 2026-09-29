@@ -1,22 +1,30 @@
 'use client';
 
 import { useNotifications } from '@/hooks/useNotifications';
+import { AlertIcon, CheckIcon, InfoIcon } from './icons';
+
+const ICONS = { success: CheckIcon, error: AlertIcon, info: InfoIcon };
 
 export default function Notifications() {
   const { notifications } = useNotifications();
 
   return (
-    <>
-      {notifications.map((n, index) => (
-        <div
-          key={n.id}
-          className={`notification ${n.type}${n.visible ? ' show' : ''}`}
-          style={{ top: 20 + index * 70 }}
-          role={n.type === 'error' ? 'alert' : 'status'}
-        >
-          {n.message}
-        </div>
-      ))}
-    </>
+    <div className="toasts" aria-live="polite">
+      {notifications.map((n) => {
+        const Icon = ICONS[n.type];
+        return (
+          <div
+            key={n.id}
+            className={`toast toast--${n.type}${n.visible ? ' toast--show' : ''}`}
+            role={n.type === 'error' ? 'alert' : 'status'}
+          >
+            <span className="toast__icon">
+              <Icon />
+            </span>
+            {n.message}
+          </div>
+        );
+      })}
+    </div>
   );
 }

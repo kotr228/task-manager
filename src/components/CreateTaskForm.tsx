@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
+import { PlusIcon } from './icons';
 
 interface Props {
   onCreate: (title: string) => Promise<boolean>;
@@ -29,23 +30,25 @@ export default function CreateTaskForm({ onCreate }: Props) {
   }
 
   return (
-    <section className="create-section">
-      <h2>Створити нове завдання</h2>
-      <form id="create-task-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <input
-            type="text"
-            id="new-task-input"
-            placeholder="Введіть назву завдання..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
-            ➕ Додати
-          </button>
-        </div>
-      </form>
-    </section>
+    <form className="create-form" onSubmit={handleSubmit}>
+      <label htmlFor="new-task-input" className="sr-only">
+        Назва нового завдання
+      </label>
+      <span className="create-form__icon">
+        <PlusIcon />
+      </span>
+      <input
+        type="text"
+        id="new-task-input"
+        placeholder="Що потрібно зробити?"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        maxLength={200}
+        autoComplete="off"
+      />
+      <button type="submit" className="btn btn-primary" disabled={submitting || !title.trim()}>
+        {submitting ? 'Додаємо…' : 'Додати завдання'}
+      </button>
+    </form>
   );
 }

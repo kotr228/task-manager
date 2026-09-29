@@ -29,6 +29,7 @@ const toEntry = (task: Task, isNew = false): TaskEntry => ({
 export function useTasks(page: number | null) {
   const { notify } = useNotifications();
   const [tasks, setTasks] = useState<TaskEntry[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [status, setStatus] = useState<LoadStatus>('loading');
   const requestId = useRef(0);
 
@@ -42,7 +43,8 @@ export function useTasks(page: number | null) {
     getTasks(page, LIMIT)
       .then((data) => {
         if (current !== requestId.current) return; // застаріла відповідь
-        setTasks(data.map((task) => toEntry(task)));
+        setTasks(data.items.map((task) => toEntry(task)));
+        setTotal(data.total);
         setStatus('ready');
       })
       .catch((error: unknown) => {
@@ -87,11 +89,12 @@ export function useTasks(page: number | null) {
 
   const renameTask = useCallback(
     async (entry: TaskEntry, title: string) => {
+      patchEntry(entry.key, { title }); // оптимістичне оновлення
       try {
         await updateTask(entry.id, { title });
-        patchEntry(entry.key, { title });
         notify('Завдання оновлено!');
       } catch (error) {
+        patchEntry(entry.key, { title: entry.title });
         notify(`Помилка оновлення: ${getErrorMessage(error)}`, 'error');
       }
     },
@@ -112,5 +115,5 @@ export function useTasks(page: number | null) {
     [notify, patchEntry],
   );
 
-  return { tasks, status, addTask, toggleTask, renameTask, removeTask };
+  return { tasks, total, status, addTask, toggleTask, renameTask, removeTask };
 }
