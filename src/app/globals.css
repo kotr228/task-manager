@@ -113,6 +113,7 @@ h2 {
   background: #e0e0e0;
 }
 
+.btn-primary:disabled,
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -164,6 +165,10 @@ h2 {
   border-color: #667eea;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
   transform: translateX(4px);
+}
+
+.task-item.removing {
+  opacity: 0;
 }
 
 .task-item.completed {

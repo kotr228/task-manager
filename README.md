@@ -1,6 +1,7 @@
 # Менеджер Завдань
 
 Веб-застосунок для управління завданнями з використанням HTTP-запитів та RESTful API.
+Побудований на **Next.js (App Router) + TypeScript + React**.
 
 ## Опис проєкту
 
@@ -27,65 +28,66 @@
 
 ```
 task-manager/
-├── index.html           # HTML структура
-├── styles.css           # Стилі застосунку
 ├── src/
-│   ├── main.js         # Ініціалізація
-│   ├── api.js          # HTTP-запити
-│   └── ui.js           # Управління DOM
-└── README.md           # Документація
+│   ├── app/
+│   │   ├── layout.tsx            # Кореневий layout, метадані
+│   │   ├── page.tsx              # Головна сторінка
+│   │   └── globals.css           # Стилі застосунку
+│   ├── components/
+│   │   ├── TaskManager.tsx       # Контейнер: форма + список + пагінація
+│   │   ├── CreateTaskForm.tsx    # Форма створення завдання
+│   │   ├── TaskItem.tsx          # Один елемент списку
+│   │   ├── Pagination.tsx        # Кнопки "Назад" / "Вперед"
+│   │   └── Notifications.tsx     # Анімовані сповіщення
+│   ├── hooks/
+│   │   ├── useTasks.ts           # Стан завдань і CRUD-операції
+│   │   ├── usePersistedPage.ts   # Поточна сторінка + LocalStorage
+│   │   └── useNotifications.tsx  # Контекст сповіщень
+│   ├── lib/
+│   │   └── api.ts                # HTTP-запити, кешування
+│   └── types/
+│       └── task.ts               # Типи Task, NewTask, TaskUpdate...
+├── next.config.ts
+├── tsconfig.json
+└── package.json
 ```
 
 ## Модулі
 
-### src/api.js
+### src/lib/api.ts
 
-Модуль для роботи з HTTP-запитами та API.
+Модуль для роботи з HTTP-запитами та API (типізований).
 
-**Основні функції:**
-
-```javascript
-getTasks(page, limit)    // Отримати завдання
-createTask(task)         // Створити завдання
-updateTask(id, updates)  // Оновити завдання
-deleteTask(id)           // Видалити завдання
-bulkUpdate(ids, updates) // Групове оновлення
+```typescript
+getTasks(page?: number, limit?: number): Promise<Task[]>
+createTask(task: NewTask): Promise<Task>
+updateTask(id: number, updates: TaskUpdate): Promise<Task>
+deleteTask(id: number): Promise<true>
+bulkUpdate(ids: number[], updates: TaskUpdate): Promise<Task[]>
+setAuthToken(token: string | null): void
+clearCache(): void
+getCacheSize(): number
 ```
 
 **Особливості:**
-- Кешування запитів через Map
-- Автоматична перевірка статусу відповіді
+- Кешування запитів через `Map<string, Task[]>`
+- Автоматична перевірка статусу відповіді (`HttpError` зі `status`/`statusText`)
 - Підтримка авторизації через токен
 - Обробка помилок
 
-### src/ui.js
+### src/hooks
 
-Модуль для управління інтерфейсом користувача.
+- **`useTasks(page)`** — завантажує завдання поточної сторінки (ігноруючи застарілі
+  відповіді), надає `addTask`, `toggleTask` (оптимістичне оновлення з відкатом),
+  `renameTask`, `removeTask` (з анімацією зникнення).
+- **`usePersistedPage()`** — номер сторінки, що відновлюється з LocalStorage після
+  монтування (без помилок гідратації SSR).
+- **`useNotifications()`** — контекст для показу сповіщень `notify(message, type)`.
 
-**Основні функції:**
+### src/components
 
-```javascript
-renderTasks(tasks)           // Рендеринг списку
-updateTasksDisplay(page)     // Оновлення відображення
-handleCreateTask(event)      // Обробка створення
-handlePagination(direction)  // Керування пагінацією
-showNotification(msg, type)  // Показ сповіщень
-```
-
-**Особливості:**
-- Динамічне оновлення DOM
-- Обробка подій (checkbox, кнопки)
-- Збереження стану в LocalStorage
-- Анімовані сповіщення
-
-### src/main.js
-
-Точка входу застосунку.
-
-**Функції:**
-- Ініціалізація при завантаженні DOM
-- Підключення обробників подій
-- Відновлення збереженого стану
+Інтерфейс розбитий на клієнтські React-компоненти (`'use client'`); сторінка
+`src/app/page.tsx` рендериться статично і гідратується в браузері.
 
 ## API
 
@@ -161,39 +163,30 @@ const page = localStorage.getItem('currentPage');
 
 ## Запуск проєкту
 
-### Варіант 1: Відкриття файлу
-
-Просто відкрийте `index.html` у браузері
-
-### Варіант 2: Live Server (VS Code)
-
-1. Встановіть розширення "Live Server"
-2. Клацніть правою кнопкою на `index.html`
-3. Оберіть "Open with Live Server"
-
-### Варіант 3: Статичний сервер
+Потрібен Node.js >= 20.9.
 
 ```bash
-# Використання npx serve
-npx serve .
+npm install
 
-# Або Python
-python -m http.server 8000
+# Режим розробки (Fast Refresh) — http://localhost:3000
+npm run dev
 
-# Або Node.js http-server
-npx http-server
+# Продакшн-збірка та запуск
+npm run build
+npm start
+
+# Перевірка типів
+npm run typecheck
 ```
 
 ## Обробка помилок
 
 ### Перевірка відповіді
 
-```javascript
-function checkResponse(response) {
+```typescript
+function checkResponse(response: Response): Response {
   if (!response.ok) {
-    const error = new Error(`HTTP Error: ${response.status}`);
-    error.status = response.status;
-    throw error;
+    throw new HttpError(response.status, response.statusText);
   }
   return response;
 }
@@ -203,13 +196,12 @@ function checkResponse(response) {
 
 Всі HTTP-запити обгорнуті в try-catch:
 
-```javascript
+```typescript
 try {
-  const tasks = await getTasks(page);
-  renderTasks(tasks);
+  const newTask = await createTask({ title, completed: false, userId: 1 });
+  setTasks((list) => [toEntry(newTask, true), ...list]);
 } catch (error) {
-  console.error('Error:', error);
-  showNotification(`Помилка: ${error.message}`, 'error');
+  notify(`Помилка створення: ${getErrorMessage(error)}`, 'error');
 }
 ```
 
@@ -218,6 +210,7 @@ try {
 - По 10 завдань на сторінку
 - Кнопки навігації "Назад" / "Вперед"
 - Вимикання кнопки "Назад" на першій сторінці
+- Вимикання кнопки "Вперед", якщо сторінка неповна
 - Збереження поточної сторінки
 
 ## Стилі
@@ -262,7 +255,7 @@ const results = await bulkUpdate(ids, { completed: true });
 ### Авторизація
 
 ```javascript
-import { setAuthToken } from './api.js';
+import { setAuthToken } from '@/lib/api';
 
 // Встановити токен
 setAuthToken('your-token-here');
@@ -274,7 +267,7 @@ setAuthToken('your-token-here');
 ### Очищення кешу
 
 ```javascript
-import { clearCache, getCacheSize } from './api.js';
+import { clearCache, getCacheSize } from '@/lib/api';
 
 console.log('Cache size:', getCacheSize());
 clearCache();
@@ -301,6 +294,64 @@ clearCache();
 - [ ] Повторні спроби при помилках
 - [ ] Оффлайн режим
 - [ ] Unit тести
+
+> JSONPlaceholder повертає `id: 201` для кожного створеного завдання, тому в UI
+> для React-ключів використовується окремий локальний ключ.
+
+## Технології
+
+- Next.js 16 (App Router)
+- React 19
+- TypeScript (strict)
+- Fetch API
+- LocalStorage API
+- CSS3
+
+## Авторизація
+
+```javascript
+import { setAuthToken } from '@/lib/api';
+
+// Встановити токен
+setAuthToken('your-token-here');
+
+// Усі наступні запити матимуть заголовок:
+// Authorization: Bearer your-token-here
+```
+
+### Очищення кешу
+
+```javascript
+import { clearCache, getCacheSize } from '@/lib/api';
+
+console.log('Cache size:', getCacheSize());
+clearCache();
+```
+
+## Відомі обмеження
+
+1. JSONPlaceholder - це тестовий API:
+   - POST/PATCH/DELETE не зберігають зміни
+   - Повертає фейкові дані
+   - Обмежена кількість записів
+
+2. Кеш очищається при будь-якій модифікації
+   - Для продакшену потрібна складніша логіка
+
+3. LocalStorage зберігає тільки номер сторінки
+   - Можна розширити для збереження фільтрів
+
+## Подальші покращення
+
+- [ ] Фільтрація (виконані/активні/всі)
+- [ ] Пошук за назвою
+- [ ] Сортування
+- [ ] Повторні спроби при помилках
+- [ ] Оффлайн режим
+- [ ] Unit тести
+
+> JSONPlaceholder повертає `id: 201` для кожного створеного завдання, тому в UI
+> для React-ключів використовується окремий локальний ключ.
 
 ## Технології
 
