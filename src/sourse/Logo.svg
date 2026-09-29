@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <!-- Градієнт для галочки (від м'ятного до синього) -->
+    <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+    
+    <!-- Неонове світіння -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Темний фон застосунку -->
+  <rect width="256" height="256" rx="56" fill="#0F172A" />
+
+  <!-- Колонки Kanban-дошки -->
+  <rect x="48" y="64" width="36" height="128" rx="10" fill="#1E293B" />
+  <rect x="110" y="64" width="36" height="128" rx="10" fill="#1E293B" />
+  <rect x="172" y="64" width="36" height="128" rx="10" fill="#1E293B" />
+
+  <!-- Картки завдань -->
+  <!-- Колонка To Do -->
+  <rect x="54" y="76" width="24" height="28" rx="6" fill="#475569" />
+  <rect x="54" y="116" width="24" height="18" rx="6" fill="#475569" />
+  
+  <!-- Колонка In Progress (активне завдання) -->
+  <rect x="116" y="90" width="24" height="36" rx="6" fill="#6366F1" opacity="0.9" />
+
+  <!-- Яскрава галочка завершення завдання (Done) -->
+  <path d="M 130 145 L 165 180 L 225 100"
+        fill="none"
+        stroke="url(#successGradient)"
+        stroke-width="20"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        filter="url(#neonGlow)" />
+</svg>
